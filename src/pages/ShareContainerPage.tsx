@@ -41,7 +41,7 @@ export function ShareContainerPage() {
         </p>
         <div className="mt-8 text-center">
           <NavButton to="/" className={ui.btnSecondary}>
-            Open Storage Scanner
+            Open StorageScanner
           </NavButton>
         </div>
       </div>
@@ -51,7 +51,7 @@ export function ShareContainerPage() {
   return (
     <div className={ui.page}>
       <p className={`${ui.subtitle} mb-2`}>
-        {locationName ?? 'Storage Scanner'}
+        {locationName ?? 'StorageScanner'}
       </p>
       <h1 className="mb-6 text-2xl font-extrabold text-violet-800">
         Container {container.number}
@@ -79,7 +79,7 @@ export function ShareContainerPage() {
 
       <div className="mt-8 text-center">
         <NavButton to="/" className={ui.btnSecondary}>
-          Open Storage Scanner
+          Open StorageScanner
         </NavButton>
       </div>
     </div>

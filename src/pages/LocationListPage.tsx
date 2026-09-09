@@ -166,7 +166,14 @@ export function LocationListPage() {
   return (
     <div className={ui.page}>
       <div className="mb-6 flex items-center justify-between gap-3">
-        <h1 className={ui.title}>Storage Scanner</h1>
+        <div className="flex min-w-0 items-center gap-3">
+          <img
+            src={`${import.meta.env.BASE_URL}storage-scanner.png`}
+            alt=""
+            className="h-10 w-10 shrink-0 rounded-lg"
+          />
+          <h1 className={ui.title}>StorageScanner</h1>
+        </div>
         <div className="flex shrink-0 items-center">
           <IconButton title="Search containers" onClick={toggleSearch}>
             <IconSearch />
