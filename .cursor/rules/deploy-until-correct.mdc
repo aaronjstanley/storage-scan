@@ -1,0 +1,30 @@
+---
+description: When the user requests a deploy, verify production, fix failures, and redeploy until the live app works.
+alwaysApply: true
+---
+
+# Deploy until production is correct
+
+When the user asks to deploy, ship, or go live, treat deploy as incomplete until the **live** site works. Do not stop after a successful CI job or git push.
+
+**Production URL:** `https://aaronjstanley.github.io/storage-scan/`
+
+**Deploy path:** push to `main` (or re-run **Deploy to GitHub Pages**). Wait for the Action to finish before verifying.
+
+## Loop
+
+1. Deploy (push `main` or dispatch the workflow). Do not force-push unless the user asked.
+2. Wait until **Deploy to GitHub Pages** succeeds. If it fails, read logs, fix the cause, commit if needed, and deploy again.
+3. Open the production URL in the browser. Hard-refresh. Exercise the real app: load locations/containers, navigate, check share links if relevant.
+4. Check console, network, and blank/broken UI. Known failure: Pages serving the `main` **source** branch instead of the built app (loads `/src/main.tsx`). Fix: Pages source must be **GitHub Actions**, then redeploy.
+5. If anything is wrong, fix it, deploy again, and re-verify from step 2. Repeat until production is correct.
+
+## Done when
+
+- The Action is green.
+- The live page renders the built app (not a blank shell).
+- Core flows work without console/network errors that break the app.
+
+## Stop and report (do not loop blindly)
+
+Stop after 3 failed attempts at the **same** fix, or if the blocker needs the user (missing GitHub secrets, Pages source they must change, auth). Say what failed, what you tried, and the exact next step.
