@@ -32,7 +32,7 @@ jobs:
           URL="${{ secrets.SUPABASE_URL }}"
           KEY="${{ secrets.SUPABASE_PUBLISHABLE_KEY }}"
           if [ -z "$URL" ]; then
-            URL="https://qybcztsfztmgavysyxqv.supabase.co"
+            URL="https://ltryvlcrnjdfjyqcufgq.supabase.co"
           fi
           if [ -z "$KEY" ]; then
             KEY="$(grep '^VITE_SUPABASE_ANON_KEY=' .env.example | cut -d= -f2-)"
@@ -47,7 +47,7 @@ jobs:
       - run: npm run build
 
       - name: Verify Supabase config in bundle
-        run: grep -q 'qybcztsfztmgavysyxqv' dist/assets/index-*.js
+        run: grep -q 'ltryvlcrnjdfjyqcufgq' dist/assets/index-*.js
 
       - uses: actions/upload-pages-artifact@v3
         with:

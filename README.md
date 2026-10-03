@@ -32,7 +32,7 @@ npm install
 
 ### 2. Supabase project
 
-This app uses Supabase project **Storage Scan** (`qybcztsfztmgavysyxqv`).
+This app uses the shared Supabase project **Med Track** (`ltryvlcrnjdfjyqcufgq`) so the database stays active with daily Med Track usage.
 
 The database schema is in [`supabase/migrations/`](supabase/migrations/). It creates:
 
@@ -46,7 +46,7 @@ The database schema is in [`supabase/migrations/`](supabase/migrations/). It cre
 cp .env.example .env
 ```
 
-Fill in from [Supabase Dashboard → Settings → API](https://supabase.com/dashboard/project/qybcztsfztmgavysyxqv/settings/api):
+Fill in from [Supabase Dashboard → Settings → API](https://supabase.com/dashboard/project/ltryvlcrnjdfjyqcufgq/settings/api):
 
 | Variable | Description |
 |---|---|

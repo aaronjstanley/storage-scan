@@ -1,4 +1,4 @@
--- Storage Scan schema (target project: qybcztsfztmgavysyxqv)
+-- Storage Scan schema (target project: Med Track / ltryvlcrnjdfjyqcufgq)
 
 CREATE TABLE locations (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
