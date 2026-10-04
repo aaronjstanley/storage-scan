@@ -5,6 +5,28 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
+export async function keepalivePatch(
+  table: string,
+  id: string,
+  body: Record<string, unknown>,
+) {
+  try {
+    await fetch(`${supabaseUrl}/rest/v1/${table}?id=eq.${id}`, {
+      method: 'PATCH',
+      headers: {
+        apikey: supabaseAnonKey,
+        Authorization: `Bearer ${supabaseAnonKey}`,
+        'Content-Type': 'application/json',
+        Prefer: 'return=minimal',
+      },
+      body: JSON.stringify(body),
+      keepalive: true,
+    })
+  } catch {
+    // iOS home-screen web apps can cancel in-flight work while navigating.
+  }
+}
+
 export type DbLocation = {
   id: string
   name: string

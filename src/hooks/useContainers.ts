@@ -15,7 +15,7 @@ import {
   renumberUpdates,
   sortByNumber,
 } from '../lib/numbering'
-import { supabase } from '../lib/supabase'
+import { supabase, keepalivePatch } from '../lib/supabase'
 import type {
   Container,
   ContainerPhoto,
@@ -251,13 +251,20 @@ export async function reorderContainers(
 export async function updateContainerLabel(
   containerId: string,
   label: string,
+  options?: { keepalive?: boolean },
 ) {
   const trimmed = label.trim()
-  const { error } = await supabase
-    .from('containers')
-    .update({ label: trimmed, updated_at: new Date().toISOString() })
-    .eq('id', containerId)
-  if (error) throw error
+  const payload = { label: trimmed, updated_at: new Date().toISOString() }
+
+  if (options?.keepalive) {
+    void keepalivePatch('containers', containerId, payload)
+  } else {
+    const { error } = await supabase
+      .from('containers')
+      .update(payload)
+      .eq('id', containerId)
+    if (error) throw error
+  }
 
   patchCachedContainer(containerId, {
     label: trimmed,

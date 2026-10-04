@@ -5,6 +5,7 @@ interface NavButtonProps {
   children: React.ReactNode
   className?: string
   onPrefetch?: () => void
+  onBeforeNavigate?: () => void
   disabled?: boolean
 }
 
@@ -13,6 +14,7 @@ export function NavButton({
   children,
   className = '',
   onPrefetch,
+  onBeforeNavigate,
   disabled,
 }: NavButtonProps) {
   const navigate = useNavigate()
@@ -21,7 +23,10 @@ export function NavButton({
     <button
       type="button"
       disabled={disabled}
-      onClick={() => navigate(to)}
+      onClick={() => {
+        onBeforeNavigate?.()
+        navigate(to)
+      }}
       onTouchStart={onPrefetch}
       onMouseEnter={onPrefetch}
       className={className}
