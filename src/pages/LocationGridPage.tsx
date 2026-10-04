@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
-import { useNavigate, useParams, useLocation as useRouteLocation } from 'react-router-dom'
+import { useState } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
 import { ConfirmDeleteDialog } from '../components/ConfirmDeleteDialog'
 import {
   IconAddRow,
@@ -22,10 +22,10 @@ import type { Row } from '../types'
 export function LocationGridPage() {
   const { locationId } = useParams<{ locationId: string }>()
   const navigate = useNavigate()
-  const pathname = useRouteLocation().pathname
   const { location, refresh: refreshLocation } = useLocation(locationId)
-  const { rows, refresh: refreshRows } = useRows(locationId)
-  const { containers, refresh: refreshContainers } = useContainers(locationId)
+  const { rows, loading: rowsLoading, refresh: refreshRows } = useRows(locationId)
+  const { containers, loading: containersLoading, refresh: refreshContainers } =
+    useContainers(locationId)
 
   const [editingName, setEditingName] = useState(false)
   const [name, setName] = useState('')
@@ -38,10 +38,6 @@ export function LocationGridPage() {
   const refreshAll = async () => {
     await Promise.all([refreshLocation(), refreshRows(), refreshContainers()])
   }
-
-  useEffect(() => {
-    refreshContainers()
-  }, [pathname, refreshContainers])
 
   const startEditing = () => {
     if (location) {
@@ -172,6 +168,11 @@ export function LocationGridPage() {
         </div>
       </div>
 
+      {(containersLoading || rowsLoading) &&
+      containers.length === 0 &&
+      rows.length === 0 ? (
+        <p className={ui.muted}>Loading containers…</p>
+      ) : (
       <div className="space-y-4">
         <RowList
           rows={rows}
@@ -199,6 +200,7 @@ export function LocationGridPage() {
           />
         )}
       </div>
+      )}
 
       {deleteRowTarget && (
         <ConfirmDeleteDialog

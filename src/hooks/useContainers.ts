@@ -3,6 +3,7 @@ import {
   cache,
   invalidateContainer,
   invalidateLocation,
+  patchCachedContainer,
 } from '../lib/dataCache'
 import {
   mapContainer,
@@ -24,28 +25,55 @@ import type {
 const SUMMARY_COLUMNS =
   'id, location_id, row_id, number, label, contents, photos, created_at, updated_at'
 
+const inflightContainers = new Map<string, Promise<ContainerSummary[]>>()
+const inflightContainer = new Map<string, Promise<Container | null>>()
+
 async function fetchContainers(locationId: string): Promise<ContainerSummary[]> {
-  const { data, error } = await supabase
-    .from('containers')
-    .select(SUMMARY_COLUMNS)
-    .eq('location_id', locationId)
-    .order('number')
-  if (error) throw error
-  return (data ?? []).map((row) => {
-    const full = mapContainer(row)
-    cache.containerById.set(full.id, full)
-    return mapContainerSummary(row)
-  })
+  const pending = inflightContainers.get(locationId)
+  if (pending) return pending
+
+  const request = (async () => {
+    const { data, error } = await supabase
+      .from('containers')
+      .select(SUMMARY_COLUMNS)
+      .eq('location_id', locationId)
+      .order('number')
+    if (error) throw error
+    return (data ?? []).map((row) => {
+      const full = mapContainer(row)
+      cache.containerById.set(full.id, full)
+      return mapContainerSummary(row)
+    })
+  })()
+
+  inflightContainers.set(locationId, request)
+  try {
+    return await request
+  } finally {
+    inflightContainers.delete(locationId)
+  }
 }
 
 async function fetchContainer(containerId: string): Promise<Container | null> {
-  const { data, error } = await supabase
-    .from('containers')
-    .select('*')
-    .eq('id', containerId)
-    .maybeSingle()
-  if (error) throw error
-  return data ? mapContainer(data) : null
+  const pending = inflightContainer.get(containerId)
+  if (pending) return pending
+
+  const request = (async () => {
+    const { data, error } = await supabase
+      .from('containers')
+      .select('*')
+      .eq('id', containerId)
+      .maybeSingle()
+    if (error) throw error
+    return data ? mapContainer(data) : null
+  })()
+
+  inflightContainer.set(containerId, request)
+  try {
+    return await request
+  } finally {
+    inflightContainer.delete(containerId)
+  }
 }
 
 export function useContainers(locationId: string | undefined) {
@@ -231,11 +259,10 @@ export async function updateContainerLabel(
     .eq('id', containerId)
   if (error) throw error
 
-  const cached = cache.containerById.get(containerId)
-  if (cached) {
-    cache.containerById.set(containerId, { ...cached, label: trimmed })
-  }
-  invalidateLocationCacheForContainer(containerId)
+  patchCachedContainer(containerId, {
+    label: trimmed,
+    updatedAt: Date.now(),
+  })
 }
 
 export async function updateContainerContents(
@@ -249,19 +276,11 @@ export async function updateContainerContents(
   if (error) throw error
 
   const cached = cache.containerById.get(containerId)
-  if (cached) {
-    cache.containerById.set(containerId, {
-      ...cached,
-      contents,
-      hasContents: containerHasContents(contents, cached.photos),
-    })
-  }
-  invalidateLocationCacheForContainer(containerId)
-}
-
-function invalidateLocationCacheForContainer(containerId: string) {
-  const cached = cache.containerById.get(containerId)
-  if (cached) invalidateLocation(cached.locationId)
+  patchCachedContainer(containerId, {
+    contents,
+    hasContents: containerHasContents(contents, cached?.photos ?? []),
+    updatedAt: Date.now(),
+  })
 }
 
 export async function uploadContainerPhoto(
@@ -293,14 +312,11 @@ export async function uploadContainerPhoto(
   if (error) throw error
 
   const cached = cache.containerById.get(containerId)
-  if (cached) {
-    cache.containerById.set(containerId, {
-      ...cached,
-      photos,
-      hasContents: containerHasContents(cached.contents, photos),
-    })
-  }
-  invalidateLocationCacheForContainer(containerId)
+  patchCachedContainer(containerId, {
+    photos,
+    hasContents: containerHasContents(cached?.contents ?? '', photos),
+    updatedAt: Date.now(),
+  })
 
   return photos
 }
@@ -320,14 +336,11 @@ export async function removeContainerPhoto(
   if (error) throw error
 
   const cached = cache.containerById.get(containerId)
-  if (cached) {
-    cache.containerById.set(containerId, {
-      ...cached,
-      photos,
-      hasContents: containerHasContents(cached.contents, photos),
-    })
-  }
-  invalidateLocationCacheForContainer(containerId)
+  patchCachedContainer(containerId, {
+    photos,
+    hasContents: containerHasContents(cached?.contents ?? '', photos),
+    updatedAt: Date.now(),
+  })
 
   return photos
 }

@@ -5,14 +5,28 @@ import { getNextNumber, renumberUpdates, sortByNumber } from '../lib/numbering'
 import { supabase } from '../lib/supabase'
 import type { Row } from '../types'
 
+const inflightRows = new Map<string, Promise<Row[]>>()
+
 async function fetchRows(locationId: string): Promise<Row[]> {
-  const { data, error } = await supabase
-    .from('rows')
-    .select('*')
-    .eq('location_id', locationId)
-    .order('number')
-  if (error) throw error
-  return (data ?? []).map(mapRow)
+  const pending = inflightRows.get(locationId)
+  if (pending) return pending
+
+  const request = (async () => {
+    const { data, error } = await supabase
+      .from('rows')
+      .select('*')
+      .eq('location_id', locationId)
+      .order('number')
+    if (error) throw error
+    return (data ?? []).map(mapRow)
+  })()
+
+  inflightRows.set(locationId, request)
+  try {
+    return await request
+  } finally {
+    inflightRows.delete(locationId)
+  }
 }
 
 export function useRows(locationId: string | undefined) {
@@ -107,6 +121,10 @@ export async function reorderRows(
     ),
   )
   if (allRows[0]) invalidateLocation(allRows[0].locationId)
+}
+
+export async function getLocationRows(locationId: string): Promise<Row[]> {
+  return fetchRows(locationId)
 }
 
 export { sortByNumber }

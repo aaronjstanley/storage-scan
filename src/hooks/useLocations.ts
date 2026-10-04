@@ -1,8 +1,12 @@
 import { useCallback, useEffect, useState } from 'react'
 import { cache, invalidateLocation, invalidateLocations } from '../lib/dataCache'
-import { mapLocation, mapRow, mapContainerSummary } from '../lib/mappers'
+import { mapLocation } from '../lib/mappers'
 import { supabase } from '../lib/supabase'
+import { getLocationContainers } from './useContainers'
+import { getLocationRows } from './useRows'
 import type { Location } from '../types'
+
+const inflightLocations = new Map<string, Promise<Location | null>>()
 
 async function fetchLocations(): Promise<Location[]> {
   const { data, error } = await supabase
@@ -11,6 +15,28 @@ async function fetchLocations(): Promise<Location[]> {
     .order('name')
   if (error) throw error
   return (data ?? []).map(mapLocation)
+}
+
+async function fetchLocation(locationId: string): Promise<Location | null> {
+  const pending = inflightLocations.get(locationId)
+  if (pending) return pending
+
+  const request = (async () => {
+    const { data, error } = await supabase
+      .from('locations')
+      .select('*')
+      .eq('id', locationId)
+      .maybeSingle()
+    if (error) throw error
+    return data ? mapLocation(data) : null
+  })()
+
+  inflightLocations.set(locationId, request)
+  try {
+    return await request
+  } finally {
+    inflightLocations.delete(locationId)
+  }
 }
 
 export function useLocations() {
@@ -49,13 +75,7 @@ export function useLocation(locationId: string | undefined) {
       setLoading(false)
       return null
     }
-    const { data, error } = await supabase
-      .from('locations')
-      .select('*')
-      .eq('id', locationId)
-      .maybeSingle()
-    if (error) throw error
-    const mapped = data ? mapLocation(data) : null
+    const mapped = await fetchLocation(locationId)
     if (mapped) cache.locationById.set(locationId, mapped)
     else cache.locationById.delete(locationId)
     setLocation(mapped)
@@ -82,39 +102,33 @@ export function useLocation(locationId: string | undefined) {
 }
 
 export async function prefetchLocation(locationId: string) {
-  if (
-    cache.locationById.has(locationId) &&
-    cache.rowsByLocation.has(locationId) &&
-    cache.containersByLocation.has(locationId)
-  ) {
-    return
+  const tasks: Promise<unknown>[] = []
+
+  if (!cache.locationById.has(locationId)) {
+    tasks.push(
+      fetchLocation(locationId).then((mapped) => {
+        if (mapped) cache.locationById.set(locationId, mapped)
+      }),
+    )
   }
 
-  const [locationRes, rowsRes, containersRes] = await Promise.all([
-    supabase.from('locations').select('*').eq('id', locationId).maybeSingle(),
-    supabase
-      .from('rows')
-      .select('*')
-      .eq('location_id', locationId)
-      .order('number'),
-    supabase
-      .from('containers')
-      .select('id, location_id, row_id, number, label, contents, photos, created_at, updated_at')
-      .eq('location_id', locationId)
-      .order('number'),
-  ])
-
-  if (locationRes.data) {
-    cache.locationById.set(locationId, mapLocation(locationRes.data))
+  if (!cache.rowsByLocation.has(locationId)) {
+    tasks.push(
+      getLocationRows(locationId).then((rows) => {
+        cache.rowsByLocation.set(locationId, rows)
+      }),
+    )
   }
-  cache.rowsByLocation.set(
-    locationId,
-    (rowsRes.data ?? []).map(mapRow),
-  )
-  cache.containersByLocation.set(
-    locationId,
-    (containersRes.data ?? []).map(mapContainerSummary),
-  )
+
+  if (!cache.containersByLocation.has(locationId)) {
+    tasks.push(
+      getLocationContainers(locationId).then((containers) => {
+        cache.containersByLocation.set(locationId, containers)
+      }),
+    )
+  }
+
+  if (tasks.length > 0) await Promise.all(tasks)
 }
 
 export async function createLocation(name: string): Promise<string> {

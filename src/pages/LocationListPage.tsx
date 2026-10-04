@@ -170,6 +170,8 @@ export function LocationListPage() {
           <img
             src={`${import.meta.env.BASE_URL}storage-scanner.png`}
             alt=""
+            width={40}
+            height={40}
             className="h-10 w-10 shrink-0 rounded-lg"
           />
           <h1 className={ui.title}>StorageScanner</h1>
