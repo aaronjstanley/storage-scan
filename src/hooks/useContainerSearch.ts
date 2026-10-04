@@ -8,6 +8,7 @@ export interface ContainerSearchResult {
   locationId: string
   locationName: string
   number: number
+  label: string
   contents: string
   photos: ContainerPhoto[]
 }
@@ -32,12 +33,13 @@ export async function searchContainers(
   const trimmed = query.trim()
   if (trimmed.length < 2) return []
 
+  const pattern = `%${escapeIlike(trimmed.replace(/"/g, ''))}%`
   const { data, error } = await supabase
     .from('containers')
     .select(
-      'id, location_id, row_id, number, contents, photos, created_at, updated_at, locations(name)',
+      'id, location_id, row_id, number, label, contents, photos, created_at, updated_at, locations(name)',
     )
-    .ilike('contents', `%${escapeIlike(trimmed)}%`)
+    .or(`contents.ilike."${pattern}",label.ilike."${pattern}"`)
     .order('number')
 
   if (error) throw error
@@ -46,6 +48,7 @@ export async function searchContainers(
     const locationName = getLocationName(row.locations)
     const contents = row.contents ?? ''
     const photos = mapPhotos(row.photos)
+    const label = (row.label ?? '').trim()
 
     cache.containerById.set(
       row.id,
@@ -54,6 +57,7 @@ export async function searchContainers(
         location_id: row.location_id,
         row_id: row.row_id,
         number: row.number,
+        label,
         contents,
         photos,
         created_at: row.created_at,
@@ -66,6 +70,7 @@ export async function searchContainers(
       locationId: row.location_id,
       locationName,
       number: row.number,
+      label,
       contents,
       photos,
     }

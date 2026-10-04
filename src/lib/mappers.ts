@@ -50,6 +50,7 @@ export function mapContainerSummary(row: {
   number: number
   created_at: string
   updated_at: string
+  label?: string | null
   contents?: string
   photos?: unknown
 }) {
@@ -60,6 +61,7 @@ export function mapContainerSummary(row: {
     locationId: row.location_id,
     rowId: row.row_id,
     number: row.number,
+    label: (row.label ?? '').trim(),
     hasContents: containerHasContents(contents, photos),
     createdAt: toTimestamp(row.created_at),
     updatedAt: toTimestamp(row.updated_at),

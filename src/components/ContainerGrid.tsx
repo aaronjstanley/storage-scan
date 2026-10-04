@@ -10,41 +10,13 @@ import {
 import {
   SortableContext,
   sortableKeyboardCoordinates,
-  rectSortingStrategy,
   useSortable,
+  verticalListSortingStrategy,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { useNavigate } from 'react-router-dom'
-import { prefetchContainer } from '../hooks/useContainers'
+import { ContainerTile } from './ContainerTile'
 import type { ContainerSummary } from '../types'
-
-function tileClassName(hasContents: boolean) {
-  return hasContents
-    ? 'flex aspect-square w-full items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-500 via-violet-500 to-fuchsia-500 text-2xl font-extrabold text-white shadow-lg shadow-violet-500/30 transition active:scale-95'
-    : 'flex aspect-square w-full items-center justify-center rounded-2xl border-2 border-dashed border-slate-300 bg-slate-100/80 text-2xl font-extrabold text-slate-400 transition active:scale-95'
-}
-
-function ContainerTileButton({
-  container,
-  onNavigate,
-  className = '',
-}: {
-  container: ContainerSummary
-  onNavigate: () => void
-  className?: string
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onNavigate}
-      onTouchStart={() => prefetchContainer(container.id)}
-      onMouseEnter={() => prefetchContainer(container.id)}
-      className={`${tileClassName(container.hasContents)} ${className}`}
-    >
-      {container.number}
-    </button>
-  )
-}
 
 interface SortableContainerTileProps {
   container: ContainerSummary
@@ -71,12 +43,11 @@ function SortableContainerTile({
   }
 
   return (
-    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
-      <ContainerTileButton
-        container={container}
-        onNavigate={onNavigate}
-      />
-    </div>
+    <ContainerTile
+      container={container}
+      onNavigate={onNavigate}
+      drag={{ setNodeRef, style, attributes, listeners }}
+    />
   )
 }
 
@@ -115,8 +86,8 @@ export function ContainerGrid({
 
   const goTo = (id: string) => () => navigate(`/container/${id}`)
 
-  const grid = (
-    <div className="grid grid-cols-4 gap-2">
+  const list = (
+    <div className="flex flex-col gap-2">
       {containers.map((c) =>
         sortable ? (
           <SortableContainerTile
@@ -125,7 +96,7 @@ export function ContainerGrid({
             onNavigate={goTo(c.id)}
           />
         ) : (
-          <ContainerTileButton
+          <ContainerTile
             key={c.id}
             container={c}
             onNavigate={goTo(c.id)}
@@ -135,7 +106,7 @@ export function ContainerGrid({
     </div>
   )
 
-  if (!sortable || !onReorder) return grid
+  if (!sortable || !onReorder) return list
 
   return (
     <DndContext
@@ -145,9 +116,9 @@ export function ContainerGrid({
     >
       <SortableContext
         items={containers.map((c) => c.id)}
-        strategy={rectSortingStrategy}
+        strategy={verticalListSortingStrategy}
       >
-        {grid}
+        {list}
       </SortableContext>
     </DndContext>
   )

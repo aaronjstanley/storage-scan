@@ -1,0 +1,2 @@
+ALTER TABLE containers
+ADD COLUMN label TEXT NOT NULL DEFAULT '';

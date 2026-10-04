@@ -22,7 +22,7 @@ import type {
 } from '../types'
 
 const SUMMARY_COLUMNS =
-  'id, location_id, row_id, number, contents, photos, created_at, updated_at'
+  'id, location_id, row_id, number, label, contents, photos, created_at, updated_at'
 
 async function fetchContainers(locationId: string): Promise<ContainerSummary[]> {
   const { data, error } = await supabase
@@ -218,6 +218,24 @@ export async function reorderContainers(
     ),
   )
   if (allContainers[0]) invalidateLocation(allContainers[0].locationId)
+}
+
+export async function updateContainerLabel(
+  containerId: string,
+  label: string,
+) {
+  const trimmed = label.trim()
+  const { error } = await supabase
+    .from('containers')
+    .update({ label: trimmed, updated_at: new Date().toISOString() })
+    .eq('id', containerId)
+  if (error) throw error
+
+  const cached = cache.containerById.get(containerId)
+  if (cached) {
+    cache.containerById.set(containerId, { ...cached, label: trimmed })
+  }
+  invalidateLocationCacheForContainer(containerId)
 }
 
 export async function updateContainerContents(

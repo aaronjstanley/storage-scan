@@ -27,6 +27,7 @@ export type DbContainer = {
   location_id: string
   row_id: string | null
   number: number
+  label: string
   contents: string
   photos: unknown
   created_at: string

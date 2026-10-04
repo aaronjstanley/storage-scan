@@ -22,6 +22,9 @@ function SearchResultCard({ result }: { result: ContainerSearchResult }) {
         <p className="text-lg font-bold text-violet-800">
           Container {result.number}
         </p>
+        {result.label ? (
+          <p className="text-sm font-semibold text-fuchsia-700">{result.label}</p>
+        ) : null}
       </NavButton>
 
       <Suspense fallback={<p className={ui.muted}>Loading contents…</p>}>

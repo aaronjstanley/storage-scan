@@ -53,9 +53,16 @@ export function ShareContainerPage() {
       <p className={`${ui.subtitle} mb-2`}>
         {locationName ?? 'StorageScanner'}
       </p>
-      <h1 className="mb-6 text-2xl font-extrabold text-violet-800">
+      <h1 className="mb-1 text-2xl font-extrabold text-violet-800">
         Container {container.number}
       </h1>
+      {container.label ? (
+        <p className="mb-6 text-base font-semibold text-fuchsia-700">
+          {container.label}
+        </p>
+      ) : (
+        <div className="mb-6" />
+      )}
 
       <div className="space-y-5">
         <div className={ui.card}>

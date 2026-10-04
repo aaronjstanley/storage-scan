@@ -99,7 +99,7 @@ export async function prefetchLocation(locationId: string) {
       .order('number'),
     supabase
       .from('containers')
-      .select('id, location_id, row_id, number, contents, photos, created_at, updated_at')
+      .select('id, location_id, row_id, number, label, contents, photos, created_at, updated_at')
       .eq('location_id', locationId)
       .order('number'),
   ])
