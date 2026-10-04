@@ -16,6 +16,7 @@ import {
 import { CSS } from '@dnd-kit/utilities'
 import { useNavigate } from 'react-router-dom'
 import { ContainerTile } from './ContainerTile'
+import { rememberLocationScroll, getScrollY } from '../lib/scrollMemory'
 import type { ContainerSummary } from '../types'
 
 interface SortableContainerTileProps {
@@ -84,7 +85,11 @@ export function ContainerGrid({
     )
   }
 
-  const goTo = (id: string) => () => navigate(`/container/${id}`)
+  const goTo = (id: string) => () => {
+    const locationId = containers[0]?.locationId
+    if (locationId) rememberLocationScroll(locationId, getScrollY())
+    navigate(`/container/${id}`, { preventScrollReset: true })
+  }
 
   const list = (
     <div className="flex flex-col gap-2">

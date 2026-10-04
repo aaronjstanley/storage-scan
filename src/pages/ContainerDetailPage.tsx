@@ -82,7 +82,7 @@ export function ContainerDetailPage() {
     if (!container) return
     const siblings = await getLocationContainers(container.locationId)
     await deleteContainer(container, siblings)
-    navigate(`/location/${container.locationId}`)
+    navigate(`/location/${container.locationId}`, { preventScrollReset: true })
   }
 
   if (loading || !container) {
@@ -101,6 +101,7 @@ export function ContainerDetailPage() {
       <NavButton
         to={`/location/${container.locationId}`}
         className={`${ui.btnBack} mb-4`}
+        preventScrollReset
         onBeforeNavigate={() => persistLabel(labelRef.current, true)}
       >
         ← {location?.name ?? 'Location'}

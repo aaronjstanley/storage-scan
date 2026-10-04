@@ -6,6 +6,7 @@ interface NavButtonProps {
   className?: string
   onPrefetch?: () => void
   onBeforeNavigate?: () => void
+  preventScrollReset?: boolean
   disabled?: boolean
 }
 
@@ -15,6 +16,7 @@ export function NavButton({
   className = '',
   onPrefetch,
   onBeforeNavigate,
+  preventScrollReset,
   disabled,
 }: NavButtonProps) {
   const navigate = useNavigate()
@@ -25,7 +27,7 @@ export function NavButton({
       disabled={disabled}
       onClick={() => {
         onBeforeNavigate?.()
-        navigate(to)
+        navigate(to, preventScrollReset ? { preventScrollReset: true } : undefined)
       }}
       onTouchStart={onPrefetch}
       onMouseEnter={onPrefetch}

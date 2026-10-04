@@ -15,6 +15,7 @@ import {
   reorderContainers,
   useContainers,
 } from '../hooks/useContainers'
+import { useRestoreLocationScroll } from '../hooks/useRestoreLocationScroll'
 import { useLocation, renameLocation, deleteLocation } from '../hooks/useLocations'
 import { createRow, deleteRow, reorderRows, useRows } from '../hooks/useRows'
 import type { Row } from '../types'
@@ -34,6 +35,13 @@ export function LocationGridPage() {
   const [busy, setBusy] = useState(false)
 
   const unassigned = containers.filter((c) => c.rowId === null)
+  const listReady = !(
+    (containersLoading || rowsLoading) &&
+    containers.length === 0 &&
+    rows.length === 0
+  )
+
+  useRestoreLocationScroll(locationId, Boolean(location) && listReady)
 
   const refreshAll = async () => {
     await Promise.all([refreshLocation(), refreshRows(), refreshContainers()])
